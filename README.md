@@ -31,18 +31,13 @@ Publishes a new message to the job queue. Returns a promise that resolves when p
 
 ```js
 queue.consume((message) => { 
-  // call message.ack() OR
-  // message.retry() OR
-  // message.reject()
+  // return a promise
 });
 ```
 Defines the consumer of the queue. The handler method would be called for each published message.
 
 Different processes can define a consumer on the same data directory. Queuelite will try to make sure each message is only consumed by a single process 
 
-- message:
-  - **body**: the body of the published message
-  - **tryCount**: number of times this message have been consumed, and failed using the retry() method.
-  - **ack()**: call message.ack() to indicate that the message was consumed successfully.
-  - **retry()**: call message.retry() to indicate that consuming the message have failed, and you wish to retry consuming the message.
-  - **reject()**: call message.reject() to indicate that consuming the message have failed, and you have no wish to retry consuming the message.
+consume handler should return a promise:
+  - **resolved promise**: indicates that the message was consumed successfully.
+  - **rejected promise**: indicates that consuming the message have failed, and you wish to retry consuming the message.

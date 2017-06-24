@@ -31,7 +31,7 @@ describe('queuelite', () => {
       return new Promise((resolve, reject) => {
         q.consume(msg => {
           try {
-            expect(msg.body).to.deep.equal(DATA);
+            expect(msg).to.deep.equal(DATA);
             resolve();
           } catch (e) {
             reject(e);
@@ -46,7 +46,7 @@ describe('queuelite', () => {
       const p = new Promise((resolve, reject) => {
         q.consume(msg => {
           try {
-            expect(msg.body).to.deep.equal(DATA);
+            expect(msg).to.deep.equal(DATA);
             resolve();
           } catch (e) {
             reject(e);
@@ -66,13 +66,14 @@ describe('queuelite', () => {
       const p = new Promise((resolve, reject) => {
         q.consume(msg => {
           try {
-            if (count++ === 0) {
-              expect(msg.body).to.deep.equal(DATA);
+            if (count === 0) {
+              count++;
+              expect(msg).to.deep.equal(DATA);
             } else if (count === 1) {
-              expect(msg.body).to.deep.equal(DATA2);
+              expect(msg).to.deep.equal(DATA2);
+              resolve();
             }
-            msg.ack();
-            resolve();
+            return Promise.resolve();
           } catch (e) {
             reject(e);
           }
@@ -93,18 +94,50 @@ describe('queuelite', () => {
         q.consume(msg => {
           try {
             if (count === 0) {
-              expect(msg.body).to.deep.equal(DATA);
-              msg.retry();
+              expect(msg).to.deep.equal(DATA);
+              count++;
+              return Promise.reject();
             } else if (count === 1) {
-              expect(msg.body).to.deep.equal(DATA);
-              msg.ack();
-              resolve();
+              count++;
+              expect(msg).to.deep.equal(DATA);
+              return Promise.resolve();
             } else if (count === 2) {
-              expect(msg.body).to.deep.equal(DATA2);
-              msg.ack();
+              expect(msg).to.deep.equal(DATA2);
               resolve();
+              return Promise.resolve();
             }
-            count++;
+          } catch (e) {
+            reject(e);
+          }
+        });
+      });
+
+      await q.publish(DATA);
+      await q.publish(DATA2);
+
+      return p;
+    });
+
+    it('runs first message on retry', async () => {
+      const q = await Queuelite.connect(DATA_DIR);
+
+      let count = 0;
+      const p = new Promise((resolve, reject) => {
+        q.consume((msg, metadata) => {
+          try {
+            if (count === 0) {
+              expect(metadata.tryCount).to.deep.equal(0);
+              count++;
+              return Promise.reject();
+            } else if (count === 1) {
+              count++;
+              expect(metadata.tryCount).to.deep.equal(1);
+              return Promise.resolve();
+            } else if (count === 2) {
+              expect(metadata.tryCount).to.deep.equal(0);
+              resolve();
+              return Promise.resolve();
+            }
           } catch (e) {
             reject(e);
           }
