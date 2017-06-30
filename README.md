@@ -40,4 +40,5 @@ Different processes can define a consumer on the same data directory. Queuelite 
 
 consume handler should return a promise:
   - **resolved promise**: indicates that the message was consumed successfully.
-  - **rejected promise**: indicates that consuming the message have failed, and you wish to retry consuming the message.
+  - **rejected promise**: indicates that consuming the message have failed, and you wish to retry consuming it.
+  - **rejected promise with Queuelite.ABORT**: indicates that consuming the message have failed, and you do not wish to retry consuming it. The aborted message is stored in an 'abort' directory in the data directory.

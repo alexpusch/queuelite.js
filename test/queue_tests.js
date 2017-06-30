@@ -149,5 +149,34 @@ describe('queuelite', () => {
 
       return p;
     });
+
+    it('aborts on abort', async () => {
+      const q = await Queuelite.connect(DATA_DIR);
+
+      let count = 0;
+      const p = new Promise((resolve, reject) => {
+        q.consume(msg => {
+          try {
+            if (count === 0) {
+              expect(msg).to.deep.equal(DATA);
+              count++;
+              return Promise.reject(Queuelite.ABORT);
+            } else if (count === 1) {
+              count++;
+              expect(msg).to.deep.equal(DATA2);
+              resolve();
+              return Promise.resolve();
+            }
+          } catch (e) {
+            reject(e);
+          }
+        });
+      });
+
+      await q.publish(DATA);
+      await q.publish(DATA2);
+
+      return p;
+    });
   });
 });
