@@ -9,174 +9,129 @@ const DATA_DIR = '/tmp/testDataDir';
 const DATA = { val: 1 };
 const DATA2 = { val: 2 };
 
+function consumeAndAssert(q, assertionFns) {
+  let counter = 0;
+
+  return new Promise((resolve, reject) => {
+    q.consume((message, metadata) => {
+      let result;
+
+      try {
+        result = assertionFns[counter](message, metadata);
+      } catch (e) {
+        return reject(e);
+      }
+
+      counter++;
+
+      if (counter >= assertionFns.length) return resolve();
+
+      return result;
+    });
+  });
+}
+
 describe('queuelite', () => {
   beforeEach(async () => {
     await fs.remove(DATA_DIR);
   });
 
-  describe('connect', () => {
-    it('creates the data dir directory', async () => {
-      await Queuelite.connect(DATA_DIR);
-      const pathExists = await fs.pathExists(DATA_DIR);
-
-      expect(pathExists).to.be.true;
-    });
-  });
-
   describe('consume', async () => {
-    it('works for pushes before consume', async () => {
+    it('works for publish before consume', async () => {
       const q = await Queuelite.connect(DATA_DIR);
       q.publish(DATA);
 
-      return new Promise((resolve, reject) => {
-        q.consume(msg => {
-          try {
-            expect(msg).to.deep.equal(DATA);
-            resolve();
-          } catch (e) {
-            reject(e);
-          }
-        });
-      });
+      await consumeAndAssert(q, [msg => expect(msg).to.deep.equal(DATA)]);
     });
 
-    it('works for pushes after consume', async () => {
+    it('works for publish after consume', async () => {
       const q = await Queuelite.connect(DATA_DIR);
 
-      const p = new Promise((resolve, reject) => {
-        q.consume(msg => {
-          try {
-            expect(msg).to.deep.equal(DATA);
-            resolve();
-          } catch (e) {
-            reject(e);
-          }
-        });
-      });
+      const p = consumeAndAssert(q, [msg => expect(msg).to.deep.equal(DATA)]);
 
       q.publish(DATA);
 
       return p;
     });
 
-    it('runs second message after first ack', async () => {
+    it('consumes second message after first consume resolves', async () => {
       const q = await Queuelite.connect(DATA_DIR);
 
       let count = 0;
-      const p = new Promise((resolve, reject) => {
-        q.consume(msg => {
-          try {
-            if (count === 0) {
-              count++;
-              expect(msg).to.deep.equal(DATA);
-            } else if (count === 1) {
-              expect(msg).to.deep.equal(DATA2);
-              resolve();
-            }
-            return Promise.resolve();
-          } catch (e) {
-            reject(e);
-          }
-        });
-      });
 
-      await q.publish(DATA);
-      await q.publish(DATA2);
+      q.publish(DATA);
+      q.publish(DATA2);
 
-      return p;
+      await consumeAndAssert(q, [
+        msg => expect(msg).to.deep.equal(DATA),
+        msg => expect(msg).to.deep.equal(DATA2)
+      ]);
     });
 
-    it('runs first message on retry', async () => {
+    it('consume first message again after first consume rejects', async () => {
       const q = await Queuelite.connect(DATA_DIR);
 
       let count = 0;
-      const p = new Promise((resolve, reject) => {
-        q.consume(msg => {
-          try {
-            if (count === 0) {
-              expect(msg).to.deep.equal(DATA);
-              count++;
-              return Promise.reject();
-            } else if (count === 1) {
-              count++;
-              expect(msg).to.deep.equal(DATA);
-              return Promise.resolve();
-            } else if (count === 2) {
-              expect(msg).to.deep.equal(DATA2);
-              resolve();
-              return Promise.resolve();
-            }
-          } catch (e) {
-            reject(e);
-          }
-        });
-      });
 
-      await q.publish(DATA);
-      await q.publish(DATA2);
+      q.publish(DATA);
+      q.publish(DATA2);
 
-      return p;
+      await consumeAndAssert(q, [
+        msg => {
+          expect(msg).to.deep.equal(DATA);
+          return Promise.reject();
+        },
+        msg => expect(msg).to.deep.equal(DATA),
+        msg => expect(msg).to.deep.equal(DATA2)
+      ]);
     });
 
-    it('runs first message on retry', async () => {
+    it('works for async consume handler', async () => {
       const q = await Queuelite.connect(DATA_DIR);
+      q.publish(DATA);
+      q.publish(DATA2);
 
-      let count = 0;
-      const p = new Promise((resolve, reject) => {
-        q.consume((msg, metadata) => {
-          try {
-            if (count === 0) {
-              expect(metadata.tryCount).to.deep.equal(0);
-              count++;
-              return Promise.reject();
-            } else if (count === 1) {
-              count++;
-              expect(metadata.tryCount).to.deep.equal(1);
-              return Promise.resolve();
-            } else if (count === 2) {
-              expect(metadata.tryCount).to.deep.equal(0);
+      await consumeAndAssert(q, [
+        msg =>
+          new Promise((resolve, reject) =>
+            setTimeout(() => {
+              expect(msg).to.deep.equal(DATA);
               resolve();
-              return Promise.resolve();
-            }
-          } catch (e) {
-            reject(e);
-          }
-        });
-      });
-
-      await q.publish(DATA);
-      await q.publish(DATA2);
-
-      return p;
+            }, 10)
+          ),
+        msg => expect(msg).to.deep.equal(DATA2)
+      ]);
     });
 
-    it('aborts on abort', async () => {
+    it('updates tryCount paramter after a message is rejected', async () => {
       const q = await Queuelite.connect(DATA_DIR);
 
-      let count = 0;
-      const p = new Promise((resolve, reject) => {
-        q.consume(msg => {
-          try {
-            if (count === 0) {
-              expect(msg).to.deep.equal(DATA);
-              count++;
-              return Promise.reject(Queuelite.ABORT);
-            } else if (count === 1) {
-              count++;
-              expect(msg).to.deep.equal(DATA2);
-              resolve();
-              return Promise.resolve();
-            }
-          } catch (e) {
-            reject(e);
-          }
-        });
-      });
+      q.publish(DATA);
+      q.publish(DATA2);
 
-      await q.publish(DATA);
-      await q.publish(DATA2);
+      await consumeAndAssert(q, [
+        (msg, metadata) => {
+          expect(metadata.tryCount).to.deep.equal(0);
+          return Promise.reject();
+        },
+        (msg, metadata) => expect(metadata.tryCount).to.deep.equal(1),
+        (msg, metadata) => expect(metadata.tryCount).to.deep.equal(0)
+      ]);
+    });
 
-      return p;
+    it('aborts a message after reject with Queuelite.ABORT', async () => {
+      const q = await Queuelite.connect(DATA_DIR);
+
+      q.publish(DATA);
+      q.publish(DATA2);
+
+      await consumeAndAssert(q, [
+        msg => {
+          expect(msg).to.deep.equal(DATA);
+          return Promise.reject(Queuelite.ABORT);
+        },
+        msg => expect(msg).to.deep.equal(DATA2)
+      ]);
     });
   });
 });
