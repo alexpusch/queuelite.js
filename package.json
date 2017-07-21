@@ -1,5 +1,12 @@
 {
   "name": "queuelite",
+  "description": "Super simple, persistent, no dependency on any db message queue",
+  "keywords": [
+    "queue",
+    "message queue",
+    "job queue"
+  ],
+  "homepage": "https://github.com/alexpusch/queuelite.js",
   "version": "0.1.0",
   "main": "lib/queuelite.js",
   "license": "MIT",
