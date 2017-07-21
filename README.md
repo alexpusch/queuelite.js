@@ -1,5 +1,3 @@
-# WIP
-
 # Super simple, persistent, no dependency on any db message queue
 
 Have you ever played around with an idea, some side project, and figured out you need a message queue? Maybe you don't want to hassle yourself with an actual message queue, setup Rabbitmq or Kafka, learn about some Redis dependant solution or anything professional as such.
@@ -26,7 +24,7 @@ Creates a new instance of queuelite. Returns a promise that resolved to the queu
 ```js
 queue.publish(message);
 ```
-Publishes a new message to the job queue. Returns a promise that resolves when promise is done
+Publishes a new message to the job queue. Returns a promise that resolves when publishing is done
 - message - plain js object containing message data
 
 ```js
