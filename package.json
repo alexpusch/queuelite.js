@@ -1,11 +1,11 @@
 {
   "name": "queuelite",
   "description": "Super simple, persistent, no dependency on any db message queue",
-  "keywords": [
-    "queue",
-    "message queue",
-    "job queue"
-  ],
+  "keywords": ["queue", "message queue", "job queue"],
+  "repository": "alexpusch/queuelite.js",
+  "engines": {
+    "node": ">=8"
+  },
   "homepage": "https://github.com/alexpusch/queuelite.js",
   "version": "0.1.1",
   "main": "lib/queuelite.js",
