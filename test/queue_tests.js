@@ -37,7 +37,7 @@ describe('queuelite', () => {
   describe('consume', async () => {
     it('works for publish before consume', async () => {
       const q = await Queuelite.connect(DATA_DIR);
-      q.publish(DATA);
+      await q.publish(DATA);
 
       await consumeAndAssert(q, [msg => expect(msg).to.deep.equal(DATA)]);
     });
@@ -47,7 +47,7 @@ describe('queuelite', () => {
 
       const p = consumeAndAssert(q, [msg => expect(msg).to.deep.equal(DATA)]);
 
-      q.publish(DATA);
+      await q.publish(DATA);
 
       return p;
     });
@@ -55,8 +55,8 @@ describe('queuelite', () => {
     it('consumes second message after first consume resolves', async () => {
       const q = await Queuelite.connect(DATA_DIR);
 
-      q.publish(DATA);
-      q.publish(DATA2);
+      await q.publish(DATA);
+      await q.publish(DATA2);
 
       await consumeAndAssert(q, [
         msg => expect(msg).to.deep.equal(DATA),
@@ -67,8 +67,8 @@ describe('queuelite', () => {
     it('consume first message again after first consume rejects', async () => {
       const q = await Queuelite.connect(DATA_DIR);
 
-      q.publish(DATA);
-      q.publish(DATA2);
+      await q.publish(DATA);
+      await q.publish(DATA2);
 
       await consumeAndAssert(q, [
         msg => {
@@ -82,8 +82,8 @@ describe('queuelite', () => {
 
     it('works for async consume handler', async () => {
       const q = await Queuelite.connect(DATA_DIR);
-      q.publish(DATA);
-      q.publish(DATA2);
+      await q.publish(DATA);
+      await q.publish(DATA2);
 
       await consumeAndAssert(q, [
         msg =>
@@ -100,8 +100,8 @@ describe('queuelite', () => {
     it('updates tryCount parameter after a message is rejected', async () => {
       const q = await Queuelite.connect(DATA_DIR);
 
-      q.publish(DATA);
-      q.publish(DATA2);
+      await q.publish(DATA);
+      await q.publish(DATA2);
 
       await consumeAndAssert(q, [
         (msg, metadata) => {
@@ -116,8 +116,8 @@ describe('queuelite', () => {
     it('aborts a message after reject with Queuelite.ABORT', async () => {
       const q = await Queuelite.connect(DATA_DIR);
 
-      q.publish(DATA);
-      q.publish(DATA2);
+      await q.publish(DATA);
+      await q.publish(DATA2);
 
       await consumeAndAssert(q, [
         msg => {
