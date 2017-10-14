@@ -1,6 +1,5 @@
 const expect = require('chai').expect;
 const fs = require('fs-extra');
-const path = require('path');
 
 const Queuelite = require('../lib/queuelite');
 
@@ -56,8 +55,6 @@ describe('queuelite', () => {
     it('consumes second message after first consume resolves', async () => {
       const q = await Queuelite.connect(DATA_DIR);
 
-      let count = 0;
-
       q.publish(DATA);
       q.publish(DATA2);
 
@@ -69,8 +66,6 @@ describe('queuelite', () => {
 
     it('consume first message again after first consume rejects', async () => {
       const q = await Queuelite.connect(DATA_DIR);
-
-      let count = 0;
 
       q.publish(DATA);
       q.publish(DATA2);
@@ -102,7 +97,7 @@ describe('queuelite', () => {
       ]);
     });
 
-    it('updates tryCount paramter after a message is rejected', async () => {
+    it('updates tryCount parameter after a message is rejected', async () => {
       const q = await Queuelite.connect(DATA_DIR);
 
       q.publish(DATA);
