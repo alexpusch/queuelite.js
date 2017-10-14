@@ -8,6 +8,10 @@ const Queuelite = require('../lib/queuelite');
 const DATA_DIR = '/tmp/testDataDir';
 const DATA = { val: 1 };
 const DATA2 = { val: 2 };
+const DATA3 = { val: 3, _priority: 1 };
+const DATA4 = { val: 4, _priority: 3 };
+const DATA5 = { val: 5, _priority: 3 };
+const DATA6 = { val: 5, _priority: 60 };
 
 function consumeAndAssert(q, assertionFns) {
   let counter = 0;
@@ -65,6 +69,26 @@ describe('queuelite', () => {
       await consumeAndAssert(q, [
         msg => expect(msg).to.deep.equal(DATA),
         msg => expect(msg).to.deep.equal(DATA2)
+      ]);
+    });
+
+    it('consumes messages in order of priority and time', async () => {
+      const q = await Queuelite.connect(DATA_DIR);
+
+      await q.publish(DATA4); // priority 3 -> 2nd
+      await q.publish(DATA); // priority not set, defaults to 50 -> 4th
+      await q.publish(DATA6); // priority 60 -> 6th
+      await q.publish(DATA2); // priority not set, defaults to 50 -> 5th
+      await q.publish(DATA3); // priority 1 -> 1st
+      await q.publish(DATA5); // priority 3 -> 3rd
+
+      await consumeAndAssert(q, [
+        msg => expect(msg).to.deep.equal(DATA3),
+        msg => expect(msg).to.deep.equal(DATA4),
+        msg => expect(msg).to.deep.equal(DATA5),
+        msg => expect(msg).to.deep.equal(DATA),
+        msg => expect(msg).to.deep.equal(DATA2),
+        msg => expect(msg).to.deep.equal(DATA6)
       ]);
     });
 

@@ -70,6 +70,7 @@ queue.publish(message);
 ```
 Publishes a new message to the job queue. Returns a promise that resolves when publishing is done
 - message - plain js object containing message data
+  - You can order messages by adding a `_priority` property to the message object. Messages will be consumed in order of priority, lowest first (1, 2, 3...). The default priority is "50".
 
 ### queue.consume
 ```js
