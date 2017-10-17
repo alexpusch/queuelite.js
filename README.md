@@ -66,10 +66,12 @@ Creates a new instance of queuelite. Returns a promise that resolved to the queu
 
 ### queue.publish
 ```js
-queue.publish(message);
+queue.publish(message, options);
 ```
 Publishes a new message to the job queue. Returns a promise that resolves when publishing is done
-- message - plain js object containing message data
+- `message` - plain js object containing message data
+- `options` - (optional) plain js object containing extra options for processing the message
+  - `priority` - You can change the order that messages are being consumed by setting a priority between `1` and `9`. The default priority is `5`. There are no assurances that messages with some priority will be processed fully before an other messages with a lower priority, just that they will be read in order of priority.
 
 ### queue.consume
 ```js
