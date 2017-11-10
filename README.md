@@ -1,5 +1,9 @@
 # Super simple, persistent, no dependency on any db message queue
 
+![Travis status](https://travis-ci.org/alexpusch/queuelite.js.svg?branch=master)
+[![Maintainability](https://api.codeclimate.com/v1/badges/27e5251f095229747316/maintainability)](https://codeclimate.com/github/alexpusch/queuelite.js/maintainability)
+
+
 Have you ever played around with an idea, some side project, and figured out you need a message queue? Maybe you don't want to hassle yourself with an actual message queue, setup Rabbitmq or Kafka, learn about some Redis dependant solution or anything professional as such.
 
 queuelite.js is a super simple, no-server, local, persistent, supports multiple publishers/consumers message queue.
