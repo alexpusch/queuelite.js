@@ -1,4 +1,4 @@
-const expect = require('chai').expect;
+const { expect } = require('chai');
 const fs = require('fs-extra');
 
 const Queuelite = require('../lib/queuelite');
@@ -24,7 +24,7 @@ function consumeAndAssert(q, assertionFns) {
         return reject(e);
       }
 
-      counter++;
+      counter += 1;
 
       if (counter >= assertionFns.length) return resolve();
 
@@ -64,7 +64,7 @@ describe('queuelite', () => {
 
       await consumeAndAssert(q, [
         msg => expect(msg).to.deep.equal(DATA),
-        msg => expect(msg).to.deep.equal(DATA2)
+        msg => expect(msg).to.deep.equal(DATA2),
       ]);
     });
 
@@ -88,7 +88,7 @@ describe('queuelite', () => {
         msg => expect(msg).to.deep.equal(DATA), // 5
         msg => expect(msg).to.deep.equal(DATA2), // 5
         msg => expect(msg).to.deep.equal(DATA6), // 6
-        msg => expect(msg).to.deep.equal(DATA) // 9
+        msg => expect(msg).to.deep.equal(DATA), // 9
       ]);
     });
 
@@ -99,12 +99,12 @@ describe('queuelite', () => {
       await q.publish(DATA2);
 
       await consumeAndAssert(q, [
-        msg => {
+        (msg) => {
           expect(msg).to.deep.equal(DATA);
           return Promise.reject();
         },
         msg => expect(msg).to.deep.equal(DATA),
-        msg => expect(msg).to.deep.equal(DATA2)
+        msg => expect(msg).to.deep.equal(DATA2),
       ]);
     });
 
@@ -115,13 +115,12 @@ describe('queuelite', () => {
 
       await consumeAndAssert(q, [
         msg =>
-          new Promise((resolve, reject) =>
+          new Promise(resolve =>
             setTimeout(() => {
               expect(msg).to.deep.equal(DATA);
               resolve();
-            }, 10)
-          ),
-        msg => expect(msg).to.deep.equal(DATA2)
+            }, 10)),
+        msg => expect(msg).to.deep.equal(DATA2),
       ]);
     });
 
@@ -137,7 +136,7 @@ describe('queuelite', () => {
           return Promise.reject();
         },
         (msg, metadata) => expect(metadata.tryCount).to.deep.equal(1),
-        (msg, metadata) => expect(metadata.tryCount).to.deep.equal(0)
+        (msg, metadata) => expect(metadata.tryCount).to.deep.equal(0),
       ]);
     });
 
@@ -161,11 +160,11 @@ describe('queuelite', () => {
       await q.publish(DATA2);
 
       await consumeAndAssert(q, [
-        msg => {
+        (msg) => {
           expect(msg).to.deep.equal(DATA);
           return Promise.reject(Queuelite.ABORT);
         },
-        msg => expect(msg).to.deep.equal(DATA2)
+        msg => expect(msg).to.deep.equal(DATA2),
       ]);
     });
   });
